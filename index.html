@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hugo_SHADE // CYBERPROFILE</title>
+    <!-- FontAwesome for Cyberpunk Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Orbitron & Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&family=Orbitron:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #030a06;
+            --main-green: #00ff66;
+            --dark-green: #003b15;
+            --dim-green: rgba(0, 255, 102, 0.15);
+            --neon-glow: 0 0 10px #00ff66, 0 0 20px #00ff66, 0 0 40px rgba(0, 255, 102, 0.4);
+            --text-color: #e0ffe8;
+            --font-tech: 'Orbitron', sans-serif;
+            --font-main: 'Noto Sans KR', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Matrix / Cyberpunk Canvas Background */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.35;
+            pointer-events: none;
+        }
+
+        /* CRT Scanline Overlay */
+        .scanline-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.35) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.03),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.03)
+            );
+            background-size: 100% 3px, 6px 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Main Cyber UI Container */
+        .cyber-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            max-width: 1300px;
+            min-height: 720px;
+            background: rgba(4, 20, 10, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--main-green);
+            box-shadow: 0 0 25px rgba(0, 255, 102, 0.2), inset 0 0 15px rgba(0, 255, 102, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* Cyberpunk HUD Frame Decorators */
+        .hud-corner {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 3px solid var(--main-green);
+            z-index: 15;
+            pointer-events: none;
+        }
+        .hud-top-left { top: 0; left: 0; border-right: none; border-bottom: none; }
+        .hud-top-right { top: 0; right: 0; border-left: none; border-bottom: none; }
+        .hud-bottom-left { bottom: 0; left: 0; border-right: none; border-top: none; }
+        .hud-bottom-right { bottom: 0; right: 0; border-left: none; border-top: none; }
+
+        /* Left Side: Profile Section */
+        .profile-section {
+            flex: 1;
+            padding: 50px 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px dashed rgba(0, 255, 102, 0.3);
+            background: rgba(0, 15, 5, 0.4);
+            position: relative;
+        }
+
+        /* Profile Image Wrapper with Hologram Effect */
+        .profile-img-container {
+            position: relative;
+            width: 210px;
+            height: 210px;
+            margin-bottom: 25px;
+        }
+
+        .profile-img-container::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border: 2px dashed var(--main-green);
+            border-radius: 50%;
+            animation: spin 15s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        .profile-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--main-green);
+            box-shadow: var(--neon-glow);
+            filter: saturate(1.2) contrast(1.1);
+            transition: all 0.3s ease;
+        }
+
+        .profile-img-container:hover .profile-img {
+            transform: scale(1.03);
+            filter: saturate(1.5) hue-rotate(10deg);
+        }
+
+        /* Glitch Text Effect */
+        .profile-name {
+            font-family: var(--font-tech);
+            font-size: 32px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 8px var(--main-green);
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .cyber-badge {
+            font-family: var(--font-tech);
+            background: var(--dark-green);
+            color: var(--main-green);
+            border: 1px solid var(--main-green);
+            padding: 4px 12px;
+            font-size: 11px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 8px rgba(0, 255, 102, 0.3);
+        }
+
+        /* Cyber Box Description */
+        .profile-desc {
+            font-size: 15px;
+            color: #b0ffcc;
+            line-height: 1.8;
+            text-align: center;
+            background: rgba(0, 20, 8, 0.7);
+            padding: 20px 25px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 102, 0.25);
+            width: 100%;
+            max-width: 420px;
+            box-shadow: inset 0 0 10px rgba(0, 255, 102, 0.05);
+            position: relative;
+        }
+
+        .profile-desc::before {
+            content: '// SYSTEM_MSG';
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            background: var(--bg-color);
+            padding: 0 6px;
+            font-family: var(--font-tech);
+            font-size: 10px;
+            color: var(--main-green);
+        }
+
+        /* Right Side: Gallery Section */
+        .gallery-section {
+            flex: 1.8;
+            padding: 50px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .gallery-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--main-green);
+            padding-bottom: 12px;
+        }
+
+        .gallery-title {
+            font-family: var(--font-tech);
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--main-green);
+            text-shadow: 0 0 10px rgba(0, 255, 102, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .gallery-card {
+            background: rgba(0, 25, 10, 0.6);
+            border: 1px solid rgba(0, 255, 102, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .gallery-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 102, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .gallery-card:hover::after {
+            left: 100%;
+        }
+
+        .gallery-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--main-green);
+            box-shadow: 0 8px 20px rgba(0, 255, 102, 0.25);
+        }
+
+        .gallery-img-wrapper {
+            width: 100%;
+            height: 220px;
+            position: relative;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 255, 102, 0.15);
+            background: #001205;
+        }
+
+        .gallery-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .gallery-card:hover .gallery-img {
+            transform: scale(1.08);
+        }
+
+        .gallery-caption {
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-top: 14px;
+            text-align: center;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Cyberpunk Social / Quick Info Bar */
+        .cyber-stats {
+            margin-top: 35px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            padding-top: 20px;
+            border-top: 1px dashed rgba(0, 255, 102, 0.2);
+        }
+
+        .stat-box {
+            background: rgba(0, 25, 10, 0.4);
+            border: 1px solid rgba(0, 255, 102, 0.2);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-family: var(--font-tech);
+            font-size: 10px;
+            color: #70cfa0;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-family: var(--font-tech);
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--main-green);
+            margin-top: 4px;
+        }
+
+        /* Lightbox Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 10, 4, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            max-width: 80%;
+            max-height: 80vh;
+            border: 2px solid var(--main-green);
+            box-shadow: var(--neon-glow);
+            border-radius: 8px;
+            position: relative;
+            background: #000;
+        }
+
+        .modal-img {
+            max-width: 100%;
+            max-height: 75vh;
+            display: block;
+            object-fit: contain;
+        }
+
+        .modal-caption {
+            text-align: center;
+            padding: 15px;
+            font-family: var(--font-tech);
+            font-size: 18px;
+            color: var(--main-green);
+            background: rgba(0, 20, 8, 0.9);
+            border-top: 1px solid var(--main-green);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 40px;
+            height: 40px;
+            background: var(--main-green);
+            color: #000;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: var(--neon-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1024px) {
+            .cyber-container {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .profile-section {
+                border-right: none;
+                border-bottom: 1px dashed rgba(0, 255, 102, 0.3);
+                padding: 40px 20px;
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(1, 1fr);
+            }
+
+            .gallery-img-wrapper {
+                height: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cyber Matrix / Particle Canvas -->
+    <canvas id="matrix-canvas"></canvas>
+
+    <!-- CRT Visual Scanline Layer -->
+    <div class="scanline-overlay"></div>
+
+    <!-- Main Cyber UI Container -->
+    <div class="cyber-container">
+        <!-- HUD Corners -->
+        <div class="hud-corner hud-top-left"></div>
+        <div class="hud-corner hud-top-right"></div>
+        <div class="hud-corner hud-bottom-left"></div>
+        <div class="hud-corner hud-bottom-right"></div>
+
+        <!-- Left: Profile Section -->
+        <div class="profile-section">
+            <div class="profile-img-container">
+                <img src="Hugo.png" alt="프로필 사진" class="profile-img" onerror="this.src='https://placehold.co/300x300/002b11/00ff66?text=Hugo_SHADE'">
+            </div>
+            
+            <h1 class="profile-name">Hugo_SHADE</h1>
+            <div class="cyber-badge"><i class="fa-solid fa-microchip"></i> YOUTUBE CREATOR / TEAM</div>
+
+            <div class="profile-desc">
+                2025년 시작된 유튜브 채널/팀<br>
+                반갑습니다.
+            </div>
+
+            <div class="cyber-stats" style="width: 100%; max-width: 420px;">
+                <div class="stat-box">
+                    <div class="stat-label">Status</div>
+                    <div class="stat-value">ONLINE</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">ESTABLISHED</div>
+                    <div class="stat-value">2025</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">SECURITY</div>
+                    <div class="stat-value">LEVEL 5</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Achievement Gallery Section -->
+        <div class="gallery-section">
+            <div class="gallery-header">
+                <div class="gallery-title">
+                    <i class="fa-solid fa-trophy"></i> 업적 창
+                </div>
+                <span style="font-family: var(--font-tech); font-size: 12px; color: var(--main-green);">[ DATA_LOG: 03 ]</span>
+            </div>
+
+            <div class="gallery-grid">
+                <!-- Achievement Card 1 -->
+                <div class="gallery-card" onclick="openModal('pro.jpeg', '프로티어 달성')">
+                    <div class="gallery-img-wrapper">
+                        <img src="pro.jpeg" alt="프로티어 달성" class="gallery-img" onerror="this.src='https://placehold.co/400x500/001a0a/00ff66?text=PRO+TIER'">
+                    </div>
+                    <span class="gallery-caption"><i class="fa-solid fa-award" style="color:var(--main-green);"></i> 프로티어 달성</span>
+                </div>
+
+                <!-- Achievement Card 2 -->
+                <div class="gallery-card" onclick="openModal('Matcherino.jpeg', '마체리노 우승')">
+                    <div class="gallery-img-wrapper">
+                        <img src="Matcherino.jpeg" alt="마체리노 우승" class="gallery-img" onerror="this.src='https://placehold.co/400x500/001a0a/00ff66?text=MATCHERINO'">
+                    </div>
+                    <span class="gallery-caption"><i class="fa-solid fa-crown" style="color:var(--main-green);"></i> 마체리노 우승</span>
+                </div>
+
+                <!-- Achievement Card 3 -->
+                <div class="gallery-card" onclick="openModal('photo3.png', '세 번째 사진')">
+                    <div class="gallery-img-wrapper">
+                        <img src="photo3.png" alt="세 번째 사진" class="gallery-img" onerror="this.src='https://placehold.co/400x500/001a0a/00ff66?text=ACHIEVEMENT+3'">
+                    </div>
+                    <span class="gallery-caption"><i class="fa-solid fa-star" style="color:var(--main-green);"></i> 세 번째 사진</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Modal Lightbox -->
+    <div id="image-modal" class="modal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <img id="modal-img" src="" alt="확대 이미지" class="modal-img">
+            <div id="modal-caption" class="modal-caption"></div>
+        </div>
+    </div>
+
+    <script>
+        // Matrix Rain / Cyber Background Canvas Animation
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
+        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*';
+        const alphabet = katakana + latin;
+
+        const fontSize = 16;
+        let columns = Math.floor(canvas.width / fontSize);
+        let rainDrops = Array(columns).fill(1);
+
+        window.addEventListener('resize', () => {
+            columns = Math.floor(canvas.width / fontSize);
+            rainDrops = Array(columns).fill(1);
+        });
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(3, 10, 6, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#00ff66';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < rainDrops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
+
+                if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    rainDrops[i] = 0;
+                }
+                rainDrops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 33);
+
+        // Lightbox Modal Functions
+        function openModal(src, caption) {
+            const modal = document.getElementById('image-modal');
+            const modalImg = document.getElementById('modal-img');
+            const modalCap = document.getElementById('modal-caption');
+
+            modalImg.src = src;
+            modalCap.textContent = caption;
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('image-modal');
+            modal.classList.remove('active');
+        }
+
+        // Close Modal on Escape Key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+</body>
+</html>
